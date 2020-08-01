@@ -30,6 +30,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+MESSAGE_ENCRYPT_KEY = 'aXta1AwSG5ggXfA-8WXzKacpBVGUz0LjsDhRNhFL55I='
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

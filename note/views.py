@@ -9,7 +9,8 @@ from note.models import Note
 from note.serializers import NoteSerializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-
+from NotesApi.settings import MESSAGE_ENCRYPT_KEY
+from cryptography.fernet import Fernet
 # Create your views here.
 @api_view(['GET'])
 def notes_list(request):
@@ -25,7 +26,9 @@ def notes_list(request):
 
 
         notes = Note.objects.filter(author = user)
-    
+        for note in notes:
+            note.description = decryptMessage(note.description, MESSAGE_ENCRYPT_KEY)
+        print(notes)
         notes_serializar = NoteSerializers(notes, many=True)
         return JsonResponse(notes_serializar.data, safe=False)
 
@@ -44,6 +47,8 @@ def create_note(request):
             return JsonResponse({'message' : 'User does not exists'}, status=status.HTTP_404_NOT_FOUND)
 
         notes_data = JSONParser().parse(request)
+        notes_data['description'] = str(encryptMessage(notes_data['description'], MESSAGE_ENCRYPT_KEY))
+        
         notes_serializar = NoteSerializers(data=notes_data)
 
         if notes_serializar.is_valid():
@@ -91,4 +96,16 @@ def user_register(request):
             user = User.objects.create_user(username = username, password = password)
             user.save()
             return JsonResponse({'status': 'Account Created'}, status=status.HTTP_200_OK)
-            
+        
+
+def encryptMessage(message, key):
+    cipher_suite = Fernet(str.encode(key))
+    encoded_text = cipher_suite.encrypt(str.encode(message))
+    return encoded_text
+
+def decryptMessage(message, key):
+    cipher_suite = Fernet(str.encode(key))
+    message = "".join(list(message)[2:-1])
+    print(str.encode(message))
+    decoded_text = cipher_suite.decrypt(str.encode(message))
+    return decoded_text
